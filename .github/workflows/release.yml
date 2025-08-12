@@ -1,0 +1,203 @@
+name: Release Application
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+        
+    - name: Build Windows executable
+      run: |
+        pyinstaller --onefile --windowed --name download_rename_app download_rename_app.py
+        
+    - name: Upload Windows artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: windows-executable
+        path: dist/download_rename_app.exe
+        retention-days: 30
+        
+  build-macos:
+    runs-on: macos-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+        
+    - name: Build macOS app
+      run: |
+        pyinstaller --onefile --windowed --name download_rename_app download_rename_app.py
+        
+    - name: Create macOS app bundle
+      run: |
+        mkdir -p "download_rename_app.app/Contents/MacOS"
+        mkdir -p "download_rename_app.app/Contents/Resources"
+        cp dist/download_rename_app "download_rename_app.app/Contents/MacOS/"
+        
+        # Create Info.plist
+        cat > "download_rename_app.app/Contents/Info.plist" << EOF
+        <?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+        <plist version="1.0">
+        <dict>
+            <key>CFBundleExecutable</key>
+            <string>download_rename_app</string>
+            <key>CFBundleIdentifier</key>
+            <string>com.example.downloadrenameapp</string>
+            <key>CFBundleName</key>
+            <string>文件下载重命名工具</string>
+            <key>CFBundleDisplayName</key>
+            <string>文件下载重命名工具</string>
+            <key>CFBundleVersion</key>
+            <string>1.0.0</string>
+            <key>CFBundleShortVersionString</key>
+            <string>1.0.0</string>
+            <key>CFBundleInfoDictionaryVersion</key>
+            <string>6.0</string>
+            <key>CFBundlePackageType</key>
+            <string>APPL</string>
+            <key>CFBundleSignature</key>
+            <string>????</string>
+            <key>LSMinimumSystemVersion</key>
+            <string>10.13.0</string>
+            <key>NSHighResolutionCapable</key>
+            <true/>
+            <key>NSRequiresAquaSystemAppearance</key>
+            <false/>
+        </dict>
+        </plist>
+        EOF
+        
+    - name: Upload macOS artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: macos-app
+        path: |
+          dist/download_rename_app
+          download_rename_app.app/
+        retention-days: 30
+        
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+        
+    - name: Build Linux executable
+      run: |
+        pyinstaller --onefile --windowed --name download_rename_app download_rename_app.py
+        
+    - name: Upload Linux artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: linux-executable
+        path: dist/download_rename_app
+        retention-days: 30
+        
+  create-release:
+    needs: [build-windows, build-macos, build-linux]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Download Windows artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: windows-executable
+        path: ./windows/
+        
+    - name: Download macOS artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: macos-app
+        path: ./macos/
+        
+    - name: Download Linux artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: linux-executable
+        path: ./linux/
+        
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          ./windows/download_rename_app.exe
+          ./macos/download_rename_app
+          ./macos/download_rename_app.app/
+          ./linux/download_rename_app
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+        body: |
+          ## 文件下载重命名工具 v${{ github.ref_name }}
+          
+          ### 下载
+          
+          - **Windows**: 下载 `download_rename_app.exe` 文件
+          - **macOS**: 下载 `download_rename_app.app` 文件
+          - **Linux**: 下载 `download_rename_app` 文件
+          
+          ### 功能特点
+          
+          - 🖥️ 友好的图形用户界面
+          - 📊 支持Excel文件(.xlsx, .xls)读取
+          - 🔍 自动识别包含URL的列
+          - 📥 批量下载文件
+          - 🏷️ 自动重命名文件（格式：Excel文件名_序号）
+          - 📁 用户自定义下载文件夹
+          - 📈 实时下载进度显示
+          
+          ### 使用方法
+          
+          1. 运行应用程序
+          2. 选择Excel文件
+          3. 选择下载文件夹
+          4. 点击开始下载
+          
+          ### 系统要求
+          
+          - Windows 10+, macOS 10.13+, 或 Linux
+          - 足够的磁盘空间
+          - 稳定的网络连接
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
