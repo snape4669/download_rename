@@ -1,0 +1,80 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "download_rename_app"
+version = "1.0.0"
+description = "文件下载重命名工具"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Your Name", email = "your.email@example.com"}
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Operating System :: OS Independent",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Office/Business",
+    "Topic :: Utilities",
+]
+requires-python = ">=3.9"
+dependencies = [
+    "pandas>=1.3.0",
+    "requests>=2.25.0",
+    "openpyxl>=3.0.0",
+    "xlrd>=2.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=6.0",
+    "pytest-cov>=2.0",
+    "black>=21.0",
+    "flake8>=3.8",
+    "isort>=5.0",
+    "bandit>=1.6",
+    "safety>=1.10",
+]
+build = [
+    "pyinstaller>=4.0",
+]
+
+[project.scripts]
+download_rename_app = "download_rename_app:main"
+
+[project.urls]
+Homepage = "https://github.com/yourusername/download_rename_app"
+Repository = "https://github.com/yourusername/download_rename_app"
+Issues = "https://github.com/yourusername/download_rename_app/issues"
+
+[tool.setuptools]
+packages = ["download_rename_app"]
+
+[tool.black]
+line-length = 120
+target-version = ['py39', 'py310', 'py311']
+
+[tool.isort]
+profile = "black"
+line_length = 120
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--cov=download_rename_app",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "--cov-report=xml",
+] 
